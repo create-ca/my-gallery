@@ -31,7 +31,6 @@
         .back-button-sub { padding: 6px 20px; background: #fff; border: 1px solid #222; border-radius: 50px; text-decoration: none; color: #222; font-size: 13px; font-weight: bold; transition: all 0.2s ease; cursor: pointer; }
         .back-button-sub:hover { background: #222; color: #fff; }
 
-        /* ソートコントロール用のスタイル */
         .sort-container { max-width: 1200px; margin: 0 auto 15px auto; padding: 0 20px; display: none; justify-content: flex-end; align-items: center; gap: 8px; font-size: 13px; color: #666; }
         .sort-select { padding: 4px 12px; border: 1px solid #ccc; border-radius: 4px; background: #fff; color: #333; font-size: 13px; cursor: pointer; outline: none; }
 
@@ -76,7 +75,6 @@
     <div id="main-tabs" class="tabs-container nav-tabs-main"></div>
     <div id="sub-tabs" class="tabs-container nav-tabs-sub"></div>
     
-    <!-- ★ファイル名基準の昇順・降順切り替えメニュー -->
     <div id="sort-area" class="sort-container">
         <label for="sortSelect">並び替え:</label>
         <select id="sortSelect" class="sort-select" onchange="handleSortChange()">
@@ -88,7 +86,6 @@
     <div id="image-grid" class="grid"></div>
     <p id="no-images-msg">メニューから作品ジャンルを選択してください。</p>
 
-    <!-- モーダル -->
     <div id="imageModal" class="modal" onclick="closeModalOnBackground(event)">
         <div class="modal-content-wrapper">
             <button class="modal-btn modal-btn-prev" id="modalPrevBtn" onclick="changeImage(-1)">←</button>
@@ -108,7 +105,7 @@
         let currentSubGenre = null;
         let activeGalleryItems = [];
         let currentImageIndex = -1;
-        let rawCurrentItems = []; // ソート前の元データ保存用
+        let rawCurrentItems = [];
 
         const videoExts = ['.mp4', '.mov'];
         function isVideo(url) {
@@ -227,16 +224,13 @@
             processAndRenderGrid();
         }
 
-        // ★変更: ファイル名（name）の辞書順で昇順・降順を切り替えるロジック
         function processAndRenderGrid() {
             const sortStyle = document.getElementById("sortSelect").value;
             let displayItems = [...rawCurrentItems];
 
             if (sortStyle === "desc") {
-                // 降順 (Z-A / ファイル名の文字・数字が大きい順)
                 displayItems.sort((a, b) => b.name.localeCompare(a.name, undefined, {numeric: true, sensitivity: 'base'}));
             } else {
-                // 昇順 (A-Z / ファイル名の文字・数字が小さい順)
                 displayItems.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true, sensitivity: 'base'}));
             }
 
