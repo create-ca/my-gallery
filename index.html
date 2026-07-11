@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sketchbook</title>
+    <style>
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 0; background: #fafafa; color: #222; position: relative; }
+        .main-visual-container { width: 100%; max-height: 400px; overflow: hidden; background: #111; display: flex; justify-content: center; align-items: center; }
+        .main-visual { width: 100%; height: auto; max-height: 400px; object-fit: cover; }
+        .header-content { max-width: 800px; margin: 40px auto 20px auto; padding: 0 20px; text-align: center; }
+        h1 { font-size: 28px; letter-spacing: 2px; margin-bottom: 15px; font-weight: 600; }
+        h1 a { text-decoration: none; color: inherit; }
+        .description-box { font-size: 15px; line-height: 1.8; color: #555; white-space: pre-wrap; text-align: left; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #eee; margin-top: 20px; display: none; }
+        
+        .slider-wrapper { max-width: 800px; margin: 0 auto 40px auto; padding: 0 20px; display: none; }
+        .slider-container { width: 100%; height: 350px; overflow: hidden; background: #111; position: relative; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1s ease-in-out; cursor: pointer; }
+        .slide.active { opacity: 1; z-index: 10; }
+        
+        .tabs-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 20px 0; padding: 0 20px; }
+        .nav-tabs-main { border-bottom: 1px solid #e0e0e0; padding-bottom: 20px; margin-top: 40px; }
+        .tab-button-main { padding: 10px 28px; background: #fff; border: 1px solid #ddd; border-radius: 50px; text-decoration: none; color: #666; font-size: 14px; font-weight: 500; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.02); cursor: pointer; }
+        .tab-button-main:hover { border-color: #999; color: #222; transform: translateY(-1px); }
+        .tab-button-main.active { background: #222; border-color: #222; color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+
+        .nav-tabs-sub { padding-bottom: 10px; margin-bottom: 20px; display: none; }
+        .tab-button-sub { padding: 6px 20px; background: #f0f0f0; border: 1px solid #e0e0e0; border-radius: 50px; text-decoration: none; color: #777; font-size: 13px; transition: all 0.2s ease; cursor: pointer; }
+        .tab-button-sub:hover { background: #e5e5e5; color: #333; }
+        .tab-button-sub.active { background: #777; border-color: #777; color: #fff; }
+        .back-button-sub { padding: 6px 20px; background: #fff; border: 1px solid #222; border-radius: 50px; text-decoration: none; color: #222; font-size: 13px; font-weight: bold; transition: all 0.2s ease; cursor: pointer; }
+        .back-button-sub:hover { background: #222; color: #fff; }
+
+        /* ソートコントロール用のスタイル */
+        .sort-container { max-width: 1200px; margin: 0 auto 15px auto; padding: 0 20px; display: none; justify-content: flex-end; align-items: center; gap: 8px; font-size: 13px; color: #666; }
+        .sort-select { padding: 4px 12px; border: 1px solid #ccc; border-radius: 4px; background: #fff; color: #333; font-size: 13px; cursor: pointer; outline: none; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto 60px auto; padding: 0 20px; }
+        .card { background: white; border-radius: 6px; overflow: hidden; border: 1px solid #eef0f2; cursor: pointer; transition: all 0.3s; position: relative; padding-top: 100%; }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .card img, .card video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; display: block; }
+
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(255,255,255,0.96); align-items: center; justify-content: center; }
+        .modal-content-wrapper { position: relative; max-width: 85%; max-height: 90%; display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }
+        .modal-content { max-width: 100%; max-height: 90vh; object-fit: contain; box-shadow: 0 10px 40px rgba(0,0,0,0.08); border-radius: 4px; display: none; }
+        .modal-close { position: absolute; top: -40px; right: 0; color: #222; font-size: 35px; font-weight: 300; cursor: pointer; z-index: 1020; }
+        .modal-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255, 255, 255, 0.8); border: 1px solid #ddd; color: #222; width: 50px; height: 50px; border-radius: 50%; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.05); z-index: 1010; user-select: none; }
+        .modal-btn:hover { background: #222; color: #fff; border-color: #222; }
+        .modal-btn-prev { left: 20px; }
+        .modal-btn-next { right: 20px; }
+
+        @media (max-width: 768px) {
+            .modal-btn-prev { left: 10px; }
+            .modal-btn-next { right: 10px; }
+            .modal-close { right: 10px; top: -50px; }
+        }
+        .scroll-to-top { position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; background-color: #222; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 99; opacity: 0; visibility: hidden; transition: all 0.3s; }
+        .scroll-to-top.show { opacity: 1; visibility: visible; }
+        .scroll-to-top:hover { background-color: #555; transform: translateY(-3px); }
+        #no-images-msg { text-align: center; color: #999; margin: 40px 0 100px 0; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div id="main-visual-area" class="main-visual-container" style="display:none;"></div>
+
+    <div class="header-content">
+        <h1><a href="#" onclick="resetGallery(event)">Gallery</a></h1>
+        <div id="description-area" class="description-box"></div>
+    </div>
+    
+    <div id="slider-area" class="slider-wrapper">
+        <div class="slider-container" id="sliderContainer"></div>
+    </div>
+    
+    <div id="main-tabs" class="tabs-container nav-tabs-main"></div>
+    <div id="sub-tabs" class="tabs-container nav-tabs-sub"></div>
+    
+    <!-- ★ファイル名基準の昇順・降順切り替えメニュー -->
+    <div id="sort-area" class="sort-container">
+        <label for="sortSelect">並び替え:</label>
+        <select id="sortSelect" class="sort-select" onchange="handleSortChange()">
+            <option value="desc">ファイル名：降順 (Z-A / 新しい順)</option>
+            <option value="asc">ファイル名：昇順 (A-Z / 古い順)</option>
+        </select>
+    </div>
+
+    <div id="image-grid" class="grid"></div>
+    <p id="no-images-msg">メニューから作品ジャンルを選択してください。</p>
+
+    <!-- モーダル -->
+    <div id="imageModal" class="modal" onclick="closeModalOnBackground(event)">
+        <div class="modal-content-wrapper">
+            <button class="modal-btn modal-btn-prev" id="modalPrevBtn" onclick="changeImage(-1)">←</button>
+            <button class="modal-btn modal-btn-next" id="modalNextBtn" onclick="changeImage(1)">→</button>
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <img class="modal-content" id="modalImg">
+            <video class="modal-content" id="modalVideo" controls></video>
+        </div>
+    </div>
+
+    <div id="scrollTopBtn" class="scroll-to-top" onclick="scrollToTop()">▲</div>
+
+    <script>
+        const SITE_DATA = {"main_image": "main.JPG", "description": "こんにちは!\nこちらはcamyの過去絵をまとめているサイトです。\n二次創作がメインです。とてもらくがきがおおい。", "slider_images": [], "genres": {"DQⅪ": {"images": [{"url": "DQⅪ/IMG_0006.JPG", "name": "IMG_0006.JPG"}, {"url": "DQⅪ/IMG_0007.JPG", "name": "IMG_0007.JPG"}, {"url": "DQⅪ/IMG_0008.JPG", "name": "IMG_0008.JPG"}, {"url": "DQⅪ/IMG_0010.JPG", "name": "IMG_0010.JPG"}, {"url": "DQⅪ/IMG_0011.JPG", "name": "IMG_0011.JPG"}, {"url": "DQⅪ/IMG_0012.JPG", "name": "IMG_0012.JPG"}, {"url": "DQⅪ/IMG_0016.JPG", "name": "IMG_0016.JPG"}, {"url": "DQⅪ/IMG_1713.JPG", "name": "IMG_1713.JPG"}, {"url": "DQⅪ/IMG_1825.JPG", "name": "IMG_1825.JPG"}, {"url": "DQⅪ/IMG_1903.jpg", "name": "IMG_1903.jpg"}, {"url": "DQⅪ/IMG_1922.JPG", "name": "IMG_1922.JPG"}, {"url": "DQⅪ/IMG_1930.JPG", "name": "IMG_1930.JPG"}, {"url": "DQⅪ/IMG_1971.JPG", "name": "IMG_1971.JPG"}, {"url": "DQⅪ/IMG_1980.JPG", "name": "IMG_1980.JPG"}, {"url": "DQⅪ/IMG_2020.JPG", "name": "IMG_2020.JPG"}, {"url": "DQⅪ/イラスト11.PNG", "name": "イラスト11.PNG"}, {"url": "DQⅪ/イラスト25.PNG", "name": "イラスト25.PNG"}, {"url": "DQⅪ/イラスト40.PNG", "name": "イラスト40.PNG"}], "sub_genres": {}}, "Identity5": {"images": [{"url": "Identity5/00001.PNG", "name": "00001.PNG"}, {"url": "Identity5/00002.JPG", "name": "00002.JPG"}, {"url": "Identity5/00003.PNG", "name": "00003.PNG"}, {"url": "Identity5/00004.PNG", "name": "00004.PNG"}, {"url": "Identity5/00005.PNG", "name": "00005.PNG"}, {"url": "Identity5/00006.PNG", "name": "00006.PNG"}, {"url": "Identity5/00007.JPG", "name": "00007.JPG"}, {"url": "Identity5/00008.JPG", "name": "00008.JPG"}, {"url": "Identity5/00009.JPG", "name": "00009.JPG"}, {"url": "Identity5/00010.JPG", "name": "00010.JPG"}, {"url": "Identity5/00011.JPG", "name": "00011.JPG"}, {"url": "Identity5/00012.JPG", "name": "00012.JPG"}, {"url": "Identity5/00013.JPG", "name": "00013.JPG"}, {"url": "Identity5/00014.PNG", "name": "00014.PNG"}, {"url": "Identity5/00015.PNG", "name": "00015.PNG"}, {"url": "Identity5/00016.PNG", "name": "00016.PNG"}, {"url": "Identity5/00017.PNG", "name": "00017.PNG"}, {"url": "Identity5/00018.PNG", "name": "00018.PNG"}, {"url": "Identity5/00019.PNG", "name": "00019.PNG"}, {"url": "Identity5/00020.PNG", "name": "00020.PNG"}, {"url": "Identity5/00021.PNG", "name": "00021.PNG"}, {"url": "Identity5/00022.PNG", "name": "00022.PNG"}, {"url": "Identity5/00023.JPG", "name": "00023.JPG"}, {"url": "Identity5/00024.JPG", "name": "00024.JPG"}, {"url": "Identity5/00025.JPG", "name": "00025.JPG"}, {"url": "Identity5/00026.PNG", "name": "00026.PNG"}, {"url": "Identity5/00027.PNG", "name": "00027.PNG"}, {"url": "Identity5/00028.PNG", "name": "00028.PNG"}, {"url": "Identity5/00029.PNG", "name": "00029.PNG"}, {"url": "Identity5/00030.PNG", "name": "00030.PNG"}, {"url": "Identity5/00031.PNG", "name": "00031.PNG"}, {"url": "Identity5/00032.PNG", "name": "00032.PNG"}, {"url": "Identity5/00033.PNG", "name": "00033.PNG"}, {"url": "Identity5/00034.PNG", "name": "00034.PNG"}, {"url": "Identity5/00035.PNG", "name": "00035.PNG"}, {"url": "Identity5/00036.PNG", "name": "00036.PNG"}, {"url": "Identity5/00037.PNG", "name": "00037.PNG"}, {"url": "Identity5/ヘレナ 2.PNG", "name": "ヘレナ 2.PNG"}], "sub_genres": {"傭兵×機械技師(ナワトレ)": {"images": [{"url": "Identity5/傭兵×機械技師(ナワトレ)/0001.PNG", "name": "0001.PNG"}, {"url": "Identity5/傭兵×機械技師(ナワトレ)/0002.PNG", "name": "0002.PNG"}, {"url": "Identity5/傭兵×機械技師(ナワトレ)/0003.PNG", "name": "0003.PNG"}, {"url": "Identity5/傭兵×機械技師(ナワトレ)/0004.PNG", "name": "0004.PNG"}, {"url": "Identity5/傭兵×機械技師(ナワトレ)/0005.JPG", "name": "0005.JPG"}, {"url": "Identity5/傭兵×機械技師(ナワトレ)/0006.JPG", "name": "0006.JPG"}, {"url": "Identity5/傭兵×機械技師(ナワトレ)/0007.PNG", "name": "0007.PNG"}, {"url": "Identity5/傭兵×機械技師(ナワトレ)/0008.PNG", "name": "0008.PNG"}, {"url": "Identity5/傭兵×機械技師(ナワトレ)/0009.PNG", "name": "0009.PNG"}, {"url": "Identity5/傭兵×機械技師(ナワトレ)/0010.PNG", "name": "0010.PNG"}, {"url": "Identity5/傭兵×機械技師(ナワトレ)/x_0001.MP4", "name": "x_0001.MP4"}]}, "納棺師×心眼(イソヘレ)": {"images": [{"url": "Identity5/納棺師×心眼(イソヘレ)/0001.JPG", "name": "0001.JPG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0002.PNG", "name": "0002.PNG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0003.PNG", "name": "0003.PNG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0004.PNG", "name": "0004.PNG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0005.PNG", "name": "0005.PNG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0006.PNG", "name": "0006.PNG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0007.PNG", "name": "0007.PNG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0008.PNG", "name": "0008.PNG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0009.PNG", "name": "0009.PNG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0010.JPG", "name": "0010.JPG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0011.JPG", "name": "0011.JPG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0012.PNG", "name": "0012.PNG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0013.PNG", "name": "0013.PNG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0014.PNG", "name": "0014.PNG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0015.PNG", "name": "0015.PNG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0016.PNG", "name": "0016.PNG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0017.JPG", "name": "0017.JPG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0018.PNG", "name": "0018.PNG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0019.JPG", "name": "0019.JPG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0020.PNG", "name": "0020.PNG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0021.PNG", "name": "0021.PNG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0022.PNG", "name": "0022.PNG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0023.PNG", "name": "0023.PNG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0024.PNG", "name": "0024.PNG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0025.PNG", "name": "0025.PNG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/0026.PNG", "name": "0026.PNG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/IMG_0148.PNG", "name": "IMG_0148.PNG"}, {"url": "Identity5/納棺師×心眼(イソヘレ)/IMG_7052.JPG", "name": "IMG_7052.JPG"}]}}}, "ご依頼作品": {"images": [{"url": "ご依頼作品/Yuma’s illust1.png", "name": "Yuma’s illust1.png"}, {"url": "ご依頼作品/Yuma’s illust2.png", "name": "Yuma’s illust2.png"}, {"url": "ご依頼作品/Yuma’s illust3.png", "name": "Yuma’s illust3.png"}], "sub_genres": {}}, "ジャンル混合": {"images": [{"url": "ジャンル混合/0001.JPG", "name": "0001.JPG"}, {"url": "ジャンル混合/0002.JPG", "name": "0002.JPG"}, {"url": "ジャンル混合/0003.PNG", "name": "0003.PNG"}, {"url": "ジャンル混合/イラスト18 (2).PNG", "name": "イラスト18 (2).PNG"}, {"url": "ジャンル混合/イラスト29.PNG", "name": "イラスト29.PNG"}, {"url": "ジャンル混合/イラスト30.PNG", "name": "イラスト30.PNG"}, {"url": "ジャンル混合/イラスト55.PNG", "name": "イラスト55.PNG"}], "sub_genres": {}}}};
+
+        let currentGenre = null;
+        let currentSubGenre = null;
+        let activeGalleryItems = [];
+        let currentImageIndex = -1;
+        let rawCurrentItems = []; // ソート前の元データ保存用
+
+        const videoExts = ['.mp4', '.mov'];
+        function isVideo(url) {
+            return videoExts.some(ext => url.toLowerCase().endsWith(ext));
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            initSite();
+        });
+
+        function initSite() {
+            if (SITE_DATA.main_image) {
+                const container = document.getElementById("main-visual-area");
+                container.innerHTML = "";
+                if (isVideo(SITE_DATA.main_image)) {
+                    container.innerHTML = `<video src="${SITE_DATA.main_image}" class="main-visual" autoplay loop muted playsinline></video>`;
+                } else {
+                    container.innerHTML = `<img src="${SITE_DATA.main_image}" class="main-visual" alt="メイン画像">`;
+                }
+                container.style.display = "flex";
+            }
+            if (SITE_DATA.description) {
+                document.getElementById("description-area").textContent = SITE_DATA.description;
+                document.getElementById("description-area").style.display = "block";
+            }
+            if (SITE_DATA.slider_images && SITE_DATA.slider_images.length > 0) {
+                const container = document.getElementById("sliderContainer");
+                container.innerHTML = "";
+                SITE_DATA.slider_images.forEach((url, idx) => {
+                    let mediaEl;
+                    if (isVideo(url)) {
+                        mediaEl = document.createElement("video");
+                        mediaEl.src = url;
+                        mediaEl.autoplay = true;
+                        mediaEl.loop = true;
+                        mediaEl.muted = true;
+                        mediaEl.setAttribute('playsinline', '');
+                    } else {
+                        mediaEl = document.createElement("img");
+                        mediaEl.src = url;
+                    }
+                    mediaEl.className = `slide ${idx === 0 ? 'active' : ''}`;
+                    mediaEl.onclick = () => openModalSolo(url);
+                    container.appendChild(mediaEl);
+                });
+                document.getElementById("slider-area").style.display = "block";
+                startSlider();
+            }
+
+            const mainTabsContainer = document.getElementById("main-tabs");
+            mainTabsContainer.innerHTML = "";
+            Object.keys(SITE_DATA.genres).forEach(genre => {
+                const btn = document.createElement("a");
+                btn.className = "tab-button-main";
+                btn.textContent = genre;
+                btn.onclick = () => selectGenre(genre);
+                mainTabsContainer.appendChild(btn);
+            });
+        }
+
+        function startSlider() {
+            const slides = document.querySelectorAll('.slide');
+            if (slides.length > 1) {
+                let currentSlide = 0;
+                setInterval(() => {
+                    slides[currentSlide].classList.remove('active');
+                    currentSlide = (currentSlide + 1) % slides.length;
+                    slides[currentSlide].classList.add('active');
+                }, 5000);
+            }
+        }
+
+        function selectGenre(genre) {
+            currentGenre = genre;
+            currentSubGenre = null;
+
+            document.querySelectorAll(".tab-button-main").forEach(btn => {
+                btn.classList.toggle("active", btn.textContent === genre);
+            });
+
+            const genreData = SITE_DATA.genres[genre];
+            const subTabsContainer = document.getElementById("sub-tabs");
+            subTabsContainer.innerHTML = "";
+            
+            if (genreData.sub_genres && Object.keys(genreData.sub_genres).length > 0) {
+                subTabsContainer.style.display = "flex";
+                
+                const backBtn = document.createElement("a");
+                backBtn.className = "back-button-sub";
+                backBtn.textContent = "← 一覧に戻る";
+                backBtn.onclick = () => selectGenre(genre);
+                subTabsContainer.appendChild(backBtn);
+
+                Object.keys(genreData.sub_genres).forEach(sub => {
+                    const btn = document.createElement("a");
+                    btn.className = "tab-button-sub";
+                    btn.textContent = sub;
+                    btn.onclick = () => selectSubGenre(sub);
+                    subTabsContainer.appendChild(btn);
+                });
+            } else {
+                subTabsContainer.style.display = "none";
+            }
+
+            rawCurrentItems = genreData.images || [];
+            processAndRenderGrid();
+        }
+
+        function selectSubGenre(sub) {
+            currentSubGenre = sub;
+            document.querySelectorAll(".tab-button-sub").forEach(btn => {
+                btn.classList.toggle("active", btn.textContent === sub);
+            });
+            const subData = SITE_DATA.genres[currentGenre].sub_genres[sub];
+            rawCurrentItems = subData.images || [];
+            processAndRenderGrid();
+        }
+
+        // ★変更: ファイル名（name）の辞書順で昇順・降順を切り替えるロジック
+        function processAndRenderGrid() {
+            const sortStyle = document.getElementById("sortSelect").value;
+            let displayItems = [...rawCurrentItems];
+
+            if (sortStyle === "desc") {
+                // 降順 (Z-A / ファイル名の文字・数字が大きい順)
+                displayItems.sort((a, b) => b.name.localeCompare(a.name, undefined, {numeric: true, sensitivity: 'base'}));
+            } else {
+                // 昇順 (A-Z / ファイル名の文字・数字が小さい順)
+                displayItems.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true, sensitivity: 'base'}));
+            }
+
+            renderGrid(displayItems);
+        }
+
+        function handleSortChange() {
+            if (rawCurrentItems.length > 0) {
+                processAndRenderGrid();
+            }
+        }
+
+        function renderGrid(itemsList) {
+            const grid = document.getElementById("image-grid");
+            const msg = document.getElementById("no-images-msg");
+            const sortArea = document.getElementById("sort-area");
+            grid.innerHTML = "";
+            activeGalleryItems = [];
+
+            if (!itemsList || itemsList.length === 0) {
+                msg.textContent = "表示する作品がありません。";
+                msg.style.display = "block";
+                sortArea.style.display = "none";
+                return;
+            }
+
+            msg.style.display = "none";
+            sortArea.style.display = "flex";
+
+            itemsList.forEach((info, idx) => {
+                activeGalleryItems.push(info.url);
+
+                const card = document.createElement("div");
+                card.className = "card";
+                card.onclick = () => openGalleryModal(idx);
+
+                if (isVideo(info.url)) {
+                    const video = document.createElement("video");
+                    video.src = info.url;
+                    video.muted = true;
+                    video.autoplay = true;
+                    video.loop = true;
+                    video.setAttribute('playsinline', '');
+                    card.appendChild(video);
+                } else {
+                    const img = document.createElement("img");
+                    img.src = info.url;
+                    img.alt = info.name;
+                    card.appendChild(img);
+                }
+
+                grid.appendChild(card);
+            });
+        }
+
+        function resetGallery(e) {
+            e.preventDefault();
+            currentGenre = null;
+            currentSubGenre = null;
+            rawCurrentItems = [];
+            document.querySelectorAll(".tab-button-main").forEach(btn => btn.classList.remove("active"));
+            document.getElementById("sub-tabs").style.display = "none";
+            document.getElementById("sort-area").style.display = "none";
+            document.getElementById("image-grid").innerHTML = "";
+            const msg = document.getElementById("no-images-msg");
+            msg.textContent = "メニューから作品ジャンルを選択してください。";
+            msg.style.display = "block";
+        }
+
+        function openGalleryModal(index) {
+            currentImageIndex = index;
+            updateModalImage();
+            document.getElementById("imageModal").style.display = "flex";
+        }
+
+        function openModalSolo(src) {
+            currentImageIndex = -1;
+            const imgEl = document.getElementById("modalImg");
+            const videoEl = document.getElementById("modalVideo");
+            
+            videoEl.pause();
+            imgEl.style.display = "none";
+            videoEl.style.display = "none";
+
+            if (isVideo(src)) {
+                videoEl.src = src;
+                videoEl.style.display = "block";
+                videoEl.play();
+            } else {
+                imgEl.src = src;
+                imgEl.style.display = "block";
+            }
+
+            document.getElementById("modalPrevBtn").style.display = "none";
+            document.getElementById("modalNextBtn").style.display = "none";
+            document.getElementById("imageModal").style.display = "flex";
+        }
+
+        function updateModalImage() {
+            if (currentImageIndex === -1) return;
+            const src = activeGalleryItems[currentImageIndex];
+            const imgEl = document.getElementById("modalImg");
+            const videoEl = document.getElementById("modalVideo");
+
+            videoEl.pause();
+            imgEl.style.display = "none";
+            videoEl.style.display = "none";
+
+            if (isVideo(src)) {
+                videoEl.src = src;
+                videoEl.style.display = "block";
+                videoEl.play();
+            } else {
+                imgEl.src = src;
+                imgEl.style.display = "block";
+            }
+
+            document.getElementById("modalPrevBtn").style.display = (currentImageIndex > 0) ? "flex" : "none";
+            document.getElementById("modalNextBtn").style.display = (currentImageIndex < activeGalleryItems.length - 1) ? "flex" : "none";
+        }
+
+        function changeImage(direction) {
+            if (currentImageIndex === -1) return;
+            let newIndex = currentImageIndex + direction;
+            if (newIndex >= 0 && newIndex < activeGalleryItems.length) {
+                currentImageIndex = newIndex;
+                updateModalImage();
+            }
+        }
+
+        function closeModal() {
+            document.getElementById("modalVideo").pause();
+            document.getElementById("imageModal").style.display = "none";
+            currentImageIndex = -1;
+        }
+
+        function closeModalOnBackground(event) {
+            if (event.target.id === "imageModal") closeModal();
+        }
+
+        document.addEventListener('keydown', function(e) {
+            const modal = document.getElementById("imageModal");
+            if (modal.style.display === "flex") {
+                if (e.key === 'ArrowLeft') changeImage(-1);
+                if (e.key === 'ArrowRight') changeImage(1);
+                if (e.key === 'Escape') closeModal();
+            }
+        });
+
+        const scrollTopBtn = document.getElementById("scrollTopBtn");
+        window.onscroll = function() {
+            if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+                scrollTopBtn.classList.add("show");
+            } else {
+                scrollTopBtn.classList.remove("show");
+            }
+        };
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+    </script>
+</body>
+</html>
